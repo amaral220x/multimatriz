@@ -1,7 +1,11 @@
 #include<stdio.h>
 #include<stdlib.h>
+#include "timer.h"
+#include <time.h>
+
 float *matriz1, *matriz2, *saida; //matriz que será carregada do arquivo
 int linhas1, colunas1, linhas2, colunas2; //dimensoes da matriz
+double start, finish, elapsed;
 
 int lerMatriz(char nome[], int aux){
     float *matriz;
@@ -119,12 +123,18 @@ int geraArquivo(char nome[]){
 int main(int argc, char * argv[]){
     printf("%d\n", argc);
     if(argc == 4){
+        GET_TIME(start);
         lerMatriz(argv[1], 0);
-        imprime(0);
         lerMatriz(argv[2], 1);
-        imprime(1);
+        GET_TIME(finish);
+        printf("Tempo de leitura das matrizes: %f", finish-start);
+        //imprime(0);
+        //imprime(1);
+        GET_TIME(start);
         multiplica();
-        imprime(2);
+        GET_TIME(finish);
+        printf("Tempo de multiplicacao das matrizes: %f", finish-start);
+        //imprime(2);
         geraArquivo(argv[3]);
     }
 }
