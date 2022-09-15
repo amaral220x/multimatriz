@@ -2,6 +2,7 @@
 #include<stdlib.h>
 #include "timer.h"
 #include <time.h>
+#define clear() printf("\033[H\033[J")
 
 float *matriz1, *matriz2, *saida; //matriz que será carregada do arquivo
 int linhas1, colunas1, linhas2, colunas2; //dimensoes da matriz
@@ -122,19 +123,39 @@ int geraArquivo(char nome[]){
 }
 int main(int argc, char * argv[]){
     printf("%d\n", argc);
+    double total = 0;
+    double momento1,momento2,momento3 = 0;
     if(argc == 4){
         GET_TIME(start);
         lerMatriz(argv[1], 0);
         lerMatriz(argv[2], 1);
         GET_TIME(finish);
-        printf("Tempo de leitura das matrizes: %f", finish-start);
-        //imprime(0);
-        //imprime(1);
+        momento1 = finish-start;
+        total += finish-start;
+        imprime(0);
+        imprime(1);
         GET_TIME(start);
         multiplica();
         GET_TIME(finish);
-        printf("Tempo de multiplicacao das matrizes: %f", finish-start);
-        //imprime(2);
+        momento2 = finish-start;
+        total += finish-start;
+        GET_TIME(start);
+        imprime(2);
         geraArquivo(argv[3]);
+        free(saida);
+        free(matriz1);
+        free(matriz2);
+        GET_TIME(finish);
+        momento3 = finish-start;
+        total += finish-start;
+        printf("\n\n\nPressione pra continuar\n");
+        getchar();
+        clear();
+        printf("\nTempo de leitura das matrizes: %f\n", momento1);
+        printf("Tempo de multiplicacao das matrizes: %f\n", momento2);
+        printf("Tempo de escrita da matriz e free: %f\n", momento3);
+        printf("Tempo total: %f\n", total);
     }
+    else
+        printf("Por favor, entre com 3 argumentos: <matriz1><matriz2><saida>\n");
 }
