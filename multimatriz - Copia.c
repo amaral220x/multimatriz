@@ -2,12 +2,22 @@
 #include<stdlib.h>
 #include "timer.h"
 #include <time.h>
+#include <pthread.h>
 #define clear() printf("\033[H\033[J")
 
 float *matriz1, *matriz2, *saida; //matriz que será carregada do arquivo
-int linhas1, colunas1, linhas2, colunas2; //dimensoes da matriz
+int linhas1, colunas1, linhas2, colunas2, nthreads, *ids; //dimensoes da matriz
 double start, finish, elapsed;
-
+int aux = 0; //Indicar qual thread tá sendo executada.
+void *tarefa (void *arg){
+    for(int i= ids[aux]; i<linhas1; i+=nthreads) { 
+        for(int j=0; j<colunas2; j++){
+            saida[i*colunas2+j] = 0;
+            for(int k=0; k<colunas1; k++)
+                saida[i*colunas2+j] += matriz1[i*colunas1+k] * matriz2[k*colunas2+j];
+        }
+    }
+}
 int lerMatriz(char nome[], int aux){
     float *matriz;
     int linhas, colunas; //dimensoes da matriz
@@ -87,7 +97,6 @@ void imprime(int x){
     fprintf(stdout, "\n");
 }
 void multiplica(){
-    saida = (float *) malloc(sizeof(float) *linhas1*colunas2);
     for(int i=0; i<linhas1; i++) { 
         for(int j=0; j<colunas2; j++){
             saida[i*colunas2+j] = 0;
@@ -122,25 +131,46 @@ int geraArquivo(char nome[]){
     }
 }
 int main(int argc, char * argv[]){
-    printf("%d\n", argc);
+    pthread_t *tid; //Identificador da Thread
     double total = 0;
     double momento1,momento2,momento3 = 0;
-    if(argc == 4){
+    saida = (float *) malloc(sizeof(float) *linhas1*colunas2);
+    if(argc == 5){
+        tid = (pthread_t * ) malloc(sizeof(pthread_t) * atoi(argv[4]));
+        if(tid == NULL){
+            printf("Erro ao alocar memoria para as threads");
+            return 2;
+        }
+        nthreads = atoi(argv[4]);
+        ids = (int *) malloc(sizeof(int) * nthreads);
         GET_TIME(start);
         lerMatriz(argv[1], 0);
         lerMatriz(argv[2], 1);
         GET_TIME(finish);
         momento1 = finish-start;
         total += finish-start;
-        //imprime(0);
-        //imprime(1);
+        imprime(0);
+        imprime(1);
         GET_TIME(start);
-        multiplica();
+        // Multiplicação concorrente
+        for(int i = 0; i<nthreads; i++){
+            ids[i] = i;
+            if(pthread_create(tid+i, NULL, tarefa, NULL)){
+                printf("Erro ao criar threads");
+                return 3;
+            }
+            aux++;
+        }
+        //Esperando terminar
+        for(int i = 0; i<nthreads; i++){
+            pthread_join(*(tid+i), NULL);
+        }
+        //multiplica();
         GET_TIME(finish);
         momento2 = finish-start;
         total += finish-start;
         GET_TIME(start);
-        //imprime(2);
+        imprime(2);
         geraArquivo(argv[3]);
         free(saida);
         free(matriz1);
@@ -148,9 +178,9 @@ int main(int argc, char * argv[]){
         GET_TIME(finish);
         momento3 = finish-start;
         total += finish-start;
-        //printf("\n\n\nPressione pra continuar\n");
-        //getchar();
-        //clear();
+        printf("\n\n\nPressione pra continuar\n");
+        getchar();
+        clear();
         printf("\nTempo de leitura das matrizes: %f\n", momento1);
         printf("Tempo de multiplicacao das matrizes: %f\n", momento2);
         printf("Tempo de escrita da matriz e free: %f\n", momento3);
