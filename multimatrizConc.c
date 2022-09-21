@@ -69,10 +69,10 @@ int lerMatriz(char nome[], int aux){
         colunas2 = colunas;
     }
 }
-void imprime(int x){
+void imprime(int x){ 
     float *matriz;
     int linhas, colunas;
-    if(x==0){
+    if(x==0){ //Ifs para indicar qual matriz imprimir e evitar passar parâmetros. (Tava sempre dando seg fault)
         matriz = matriz1;
         linhas = linhas1;
         colunas = colunas1;
@@ -136,17 +136,20 @@ int main(int argc, char * argv[]){
     double total = 0;
     double momento1,momento2,momento3 = 0;
     if(argc == 5){
-        tid = (pthread_t * ) malloc(sizeof(pthread_t) * atoi(argv[4]));
+        ids = (int *) malloc(sizeof(int) * nthreads);
+        GET_TIME(start); //Tempo de leitura das matrizes
+        lerMatriz(argv[1], 0);
+        lerMatriz(argv[2], 1);
+        GET_TIME(finish);
+        nthreads = atoi(argv[4]);
+        if(nthreads > linhas1){ //Max de Threads possível == max de linhas
+            nthreads = linhas1;
+        }
+        tid = (pthread_t * ) malloc(sizeof(pthread_t) * nthreads);
         if(tid == NULL){
             printf("Erro ao alocar memoria para as threads");
             return 2;
         }
-        nthreads = atoi(argv[4]);
-        ids = (int *) malloc(sizeof(int) * nthreads);
-        GET_TIME(start);
-        lerMatriz(argv[1], 0);
-        lerMatriz(argv[2], 1);
-        GET_TIME(finish);
         momento1 = finish-start;
         total += finish-start;
         printf("Ate aqui ok\n");
@@ -155,6 +158,10 @@ int main(int argc, char * argv[]){
         GET_TIME(start);
         saida = (float *) malloc(sizeof(float) *linhas1*colunas2);
         // Multiplicação concorrente
+        if(linhas2 != colunas1){ //Condição de existencia da multiplicação
+            printf("Não é possível realizar a multiplicacao \n");
+            return 4;
+        }
         for(long int i = 0; i<nthreads; i++){
             ids[i] = i;
             if(pthread_create(tid+i, NULL, tarefa, (void *) (ids+i))){
@@ -173,6 +180,7 @@ int main(int argc, char * argv[]){
         GET_TIME(start);
         //imprime(2);
         geraArquivo(argv[3]);
+        //liberando as coisas
         free(saida);
         free(matriz1);
         free(matriz2);
@@ -188,5 +196,5 @@ int main(int argc, char * argv[]){
         printf("Tempo total: %f\n", total);
     }
     else
-        printf("Por favor, entre com 3 argumentos: <matriz1><matriz2><saida>\n");
+        printf("Por favor, entre com 4 argumentos: <matriz1><matriz2><saida><nthreads>\n");
 }
